@@ -1,0 +1,3 @@
+[submodule "vendor/kujira.js"]
+	path = vendor/kujira.js
+	url = https://github.com/Team-Kujira/kujira.js

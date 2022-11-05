@@ -1,0 +1,26 @@
+{
+  "name": "kns-ui-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "kns-ui-web",
+  "author": "mintthemoon",
+  "keywords": [
+    "gatsby"
+  ],
+  "scripts": {
+    "develop": "gatsby develop",
+    "start": "gatsby develop",
+    "build": "gatsby build",
+    "serve": "gatsby serve",
+    "clean": "gatsby clean"
+  },
+  "dependencies": {
+    "bootstrap": "^5.2.2",
+    "gatsby": "^4.24.7",
+    "gatsby-plugin-sass": "^5.24.0",
+    "kujira.js": "file:vendor/kujira.js",
+    "react": "^18.1.0",
+    "react-bootstrap": "^2.5.0",
+    "react-dom": "^18.1.0"
+  }
+}

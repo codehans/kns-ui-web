@@ -1,0 +1,61 @@
+$primary: #D62839;
+$secondary: #60fbd0;
+$success: #00c853;
+$info: #1e92e6;
+$warning: #f57c00;
+$danger: #e53935;
+$light: #FBF0EF;
+$dark: #161721;
+$grey: #90a4ae;
+$primary-light: #F72F43;
+$primary-dark: #8a1925;
+
+$theme-colors: (
+  primary: $primary,
+  secondary: $secondary,
+  success: $success,
+  info: $info,
+  warning: $warning,
+  danger: $danger,
+  light: $light,
+  dark: $dark,
+  grey: $grey,
+  primary-light: $primary-light,
+  primary-dark: $primary-dark,
+);
+
+@import '~bootstrap/scss/bootstrap.scss';
+
+.btn {
+    border-radius: 0.2em;
+}
+
+.btn:hover {
+    background-color: rgba(0, 0, 0, 0);
+    color: $primary;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 8px rgba(247, 47, 67, 0.6);
+}
+
+.btn:focus {
+    background-color: rgba(0, 0, 0, 0);
+    color: $primary;
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 8px rgba(247, 47, 67, 0.6);
+}
+
+.btn:active {
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    color: $primary !important;
+}
+
+.card {
+    border-radius: 0.2em;
+    box-shadow: 0.2em 0.2em 0.4em rgba(0, 0, 0, 0.2);
+}
+
+.form-control {
+    border-radius: 0.2em;
+}
+
+.form-control:focus {
+    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.075) inset, 0px 0px 8px rgba(247, 47, 67, 0.6);
+}
