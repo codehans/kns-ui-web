@@ -4,14 +4,14 @@ import * as React from "react"
 import Col from "react-bootstrap/Col"
 import Row from "react-bootstrap/Row"
 import Table from "react-bootstrap/Table"
-import { ChevronRight } from "react-feather"
 
 import Denom from "../components/denom"
 import DomainSearch from "../components/domain-search"
 import FormatName from "../components/format-name"
 import Layout from "../components/layout"
+import SortedTable from "../components/sorted-table"
 import Panel from "../components/panel"
-import { getAuctionStatus, getCurrentTimeSeconds } from "../lib/tools"
+import { getAuctionStatus, getAuctionStatusWeight, getCurrentTimeSeconds } from "../lib/tools"
 import { denomBase, denomDisplay, denomExponent, registrarGraceDuration } from "../lib/vars"
 
 const client = CosmWasmClient
@@ -75,7 +75,18 @@ const getDomainStatusColor = (status) => {
     case "Expiring":
       return "text-warning"
     case "Expired":
-      return "text-primary-dark"
+      return "text-grey"
+  }
+}
+
+const getDomainStatusWeight = (status) => {
+  switch (status) {
+    case "Active":
+      return 3
+    case "Expiring":
+      return 2
+    case "Expired":
+      return 1
   }
 }
 
@@ -122,7 +133,7 @@ const getTopAuctions = (cb) => auctions
         .then(bid => {
           return {
             domain: auction.domain,
-            top_bid_amount: bid.amount,
+            topBidAmount: bid.amount,
             status: getAuctionStatus(Number(auction.open_start)),
           }
         })
@@ -165,38 +176,27 @@ const IndexPage = () => {
                 <p className="text-grey text-center">Loading domains...</p>
                 : ownedDomains.length < 1 ?
                   <p className="text-grey text-center">No domains found in this wallet yet. Buy one and it will show up here!</p>
-                  : <Table variant="grey" size="sm" borderless striped hover>
-                    <thead className="text-muted">
-                      <tr>
-                        <td>Name</td>
-                        <td className="text-center d-none d-xl-block">Status</td>
-                        <td className="text-end">Expiration</td>
-                        <td className="text-end"><ChevronRight/></td>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        ownedDomains.map(domain => <tr className={getDomainStatusColor(domain.status)}>
-                          <td className="text-start text-reset pe-0">
-                            <a href={"/" + domain.name} className="text-reset text-decoration-none d-block">
-                              <FormatName>{domain.name}</FormatName>
-                            </a>    
-                          </td>
-                          <td className="text-center text-reset ps-0 pe-0 d-none d-xl-block">
-                            <a href={"/" + domain.name} className="text-reset text-decoration-none d-block">
-                              {domain.status}
-                            </a>
-                          </td>
-                          <td className="text-end text-reset ps-0">
-                            <a href={"/" + domain.name} className="text-reset text-decoration-none d-block">
-                              {domain.expiration.toLocaleDateString()}
-                            </a>
-                          </td>
-                          <td className="text-end text-grey"><ChevronRight/></td>
-                        </tr>)
+                  : <Col className="ps-xl-5 pe-xl-5">
+                    <SortedTable
+                      headers={["Name", "Status", "Expiration"]}
+                      data={
+                        ownedDomains.map(d => [
+                          () => <FormatName>{d.name}</FormatName>,
+                          d.status,
+                          d.expiration.toLocaleDateString()
+                        ])
                       }
-                    </tbody>
-                  </Table>
+                      sort={[
+                        (x, y) => x().props.children.localeCompare(y().props.children),
+                        (x, y) => getDomainStatusWeight(y) - getDomainStatusWeight(x),
+                        (x, y) => new Date(y) - new Date(x)
+                      ]}
+                      sortDefault={1}
+                      styles={["text-start", "text-start d-none d-md-block", "text-end"]}
+                      rowStyles={(row) => getDomainStatusColor(row[1])}
+                      rowLinks={(row) => `/${row[0]}`}
+                    />
+                  </Col>
             }
           </Panel>
         </Col>
@@ -207,40 +207,63 @@ const IndexPage = () => {
                 <p className="text-grey text-center">Loading auctions...</p>
                 : topAuctions.length < 1 ?
                   <p className="text-grey text-center">No auctions found.</p>
-                  : <Table variant="grey" size="sm" borderless striped hover>
-                    <thead className="text-muted">
-                      <tr>
-                        <td>#</td>
-                        <td>Name</td>
-                        <td>Status</td>
-                        <td className="text-end">Price</td>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        topAuctions
-                          .map((auction, i) => <tr>
-                            <td className="text-muted">{i + 1}</td>
-                            <td>
-                              <a href={"/" + auction.domain} className="text-light text-decoration-none d-block">
-                                <FormatName>{auction.domain}</FormatName>
-                              </a>
-                            </td>
-                            <td><a href={"/" + auction.domain} className="text-light text-decoration-none d-block">{auction.status}</a></td>
-                            <td className="text-end text-light">
-                              <a href={"/" + auction.domain} className="text-light text-decoration-none d-block">
-                                <Denom
-                                  amount={auction.top_bid_amount}
-                                  base={denomBase}
-                                  display={denomDisplay}
-                                  exponent={denomExponent}
-                                />
-                              </a>
-                            </td>
-                          </tr>)
-                      }
-                    </tbody>
-                  </Table>
+                  : <SortedTable
+                    headers={["Name", "Status", "Price"]}
+                    data={
+                      topAuctions.map(a => [
+                        () => <FormatName>{a.domain}</FormatName>,
+                        a.status,
+                        () => <Denom
+                          amount={a.topBidAmount}
+                          base={denomBase}
+                          display={denomDisplay}
+                          exponent={denomExponent}
+                        />
+                      ])
+                    }
+                    sort={[
+                      (x, y) => x().props.children.localeCompare(y().props.children),
+                      (x, y) => getAuctionStatusWeight(y) - getAuctionStatusWeight(x),
+                      (x, y) => y().props.amount - x().props.amount,
+                    ]}
+                    sortDefault={2}
+                    rowStyles={() => "text-light"}
+                    styles={["text-start", "text-start", "text-end"]}
+                  />
+                  // : <Table variant="grey" size="sm" borderless striped hover>
+                  //   <thead className="text-muted">
+                  //     <tr>
+                  //       <td>#</td>
+                  //       <td>Name</td>
+                  //       <td>Status</td>
+                  //       <td className="text-end">Price</td>
+                  //     </tr>
+                  //   </thead>
+                  //   <tbody>
+                  //     {
+                  //       topAuctions
+                  //         .map((auction, i) => <tr>
+                  //           <td className="text-muted">{i + 1}</td>
+                  //           <td>
+                  //             <a href={"/" + auction.domain} className="text-light text-decoration-none d-block">
+                  //               <FormatName>{auction.domain}</FormatName>
+                  //             </a>
+                  //           </td>
+                  //           <td><a href={"/" + auction.domain} className="text-light text-decoration-none d-block">{auction.status}</a></td>
+                  //           <td className="text-end text-light">
+                  //             <a href={"/" + auction.domain} className="text-light text-decoration-none d-block">
+                  //               <Denom
+                  //                 amount={auction.top_bid_amount}
+                  //                 base={denomBase}
+                  //                 display={denomDisplay}
+                  //                 exponent={denomExponent}
+                  //               />
+                  //             </a>
+                  //           </td>
+                  //         </tr>)
+                  //     }
+                  //   </tbody>
+                  // </Table>
             }
           </Panel>
         </Col>

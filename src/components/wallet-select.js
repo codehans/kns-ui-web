@@ -1,6 +1,6 @@
-import * as React from 'react'
+import * as React from "react"
 import Button from "react-bootstrap/Button"
-import { Link } from "react-feather"
+import { FaWallet } from "react-icons/fa"
 
 const WalletSelect = ({name, addr}) => {
   if (!name) {
@@ -9,7 +9,7 @@ const WalletSelect = ({name, addr}) => {
     </Button>
   }
   return <Button variant="outline-primary" className="text-light">
-    {name} <Link style={{width: "1em"}} className="text-grey ms-2"/>
+    <FaWallet style={{width: "1em", marginBottom: "0.1em"}} className="text-grey me-2"/> {name}
   </Button>
 }
 

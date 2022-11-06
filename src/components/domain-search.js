@@ -20,9 +20,10 @@ class DomainSearch extends React.Component {
   handleSubmit(event) {
     event.preventDefault()
     if (this.state.searchInput.length < 1) {
-      return
+      this.setState({ showResults: false })
+    } else {
+      this.setState({ search: this.state.searchInput, showResults: true, searchInput: "" })
     }
-    this.setState({ search: this.state.searchInput, showResults: true, searchInput: "" })
   }
   
   render() {
@@ -37,7 +38,7 @@ class DomainSearch extends React.Component {
               onChange={this.handleChange}
               className="text-light bg-dark bg-opacity-75 border-grey border-opacity-25"
             />
-            <Button variant="outline-primary-light" className="border-opacity-75" type="submit">Search</Button>
+            <Button variant="outline-primary" className="border-opacity-75" type="submit">Search</Button>
           </InputGroup>
         </Form>
         {
