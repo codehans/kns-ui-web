@@ -15,12 +15,15 @@
     "clean": "gatsby clean"
   },
   "dependencies": {
+    "@cosmjs/cosmwasm-stargate": "^0.29.3",
+    "@fontsource/montserrat": "^4.5.13",
     "bootstrap": "^5.2.2",
     "gatsby": "^4.24.7",
     "gatsby-plugin-sass": "^5.24.0",
-    "kujira.js": "file:vendor/kujira.js",
+    "kujira.js": "file:../kujira.js",
     "react": "^18.1.0",
     "react-bootstrap": "^2.5.0",
-    "react-dom": "^18.1.0"
+    "react-dom": "^18.1.0",
+    "react-feather": "^2.0.10"
   }
 }

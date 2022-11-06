@@ -1,18 +1,27 @@
 import { CosmWasmClient } from "@cosmjs/cosmwasm-stargate"
 import * as kujira from "kujira.js"
 import * as React from "react"
-import Button from 'react-bootstrap/Button';
-import Card from 'react-bootstrap/Card';
-import Col from 'react-bootstrap/Col'
-import Form from 'react-bootstrap/Form';
-import InputGroup from 'react-bootstrap/InputGroup';
-import Row from 'react-bootstrap/Row'
-import Table from 'react-bootstrap/Table';
+import Col from "react-bootstrap/Col"
+import Row from "react-bootstrap/Row"
+import Table from "react-bootstrap/Table"
+import { ChevronRight } from "react-feather"
 
-import Layout from '../components/layout'
+import Denom from "../components/denom"
+import DomainSearch from "../components/domain-search"
+import FormatName from "../components/format-name"
+import Layout from "../components/layout"
+import Panel from "../components/panel"
+import { getAuctionStatus, getCurrentTimeSeconds } from "../lib/tools"
+import { denomBase, denomDisplay, denomExponent, registrarGraceDuration } from "../lib/vars"
 
 const client = CosmWasmClient
   .connect({ url: "https://test-rpc-kujira.mintthemoon.xyz:443" })
+
+const auctions = client
+  .then(client => new kujira.kns.auctions.AuctionsQueryClient(
+    client,
+    "kujira1w5hw9059pxgfqsn9paes8ztld3lcs7cw8mwe4kq9n8d85l59895qkzs7ca"
+  ))
 
 const registry = client
   .then(client => new kujira.kns.registry.RegistryQueryClient(
@@ -26,6 +35,12 @@ const registrar = client
     "kujira1s7xhj5vf675ykgqruw70g3a7yes6eyysc8c4vmqaav0dks22cerqd3lfjy"
   ))
 
+const contracts = {
+  auctions: auctions,
+  registrar: registrar,
+  registry: registry,
+}
+
 const getKeplrAddr = async (cb) => window.keplr
   .enable("harpoon-4")
   .then(() => window
@@ -33,6 +48,14 @@ const getKeplrAddr = async (cb) => window.keplr
     .getAccounts()
     .then(accounts => cb(accounts[0].address))
   )
+
+const getWalletAddr = async(cb) => {
+  if (window.keplr) {
+    getKeplrAddr(cb)
+  } else {
+    cb(false)
+  }
+}
 
 const resolveKujiraAddr = async (addr, cb) => {
   if (!addr) {
@@ -44,8 +67,27 @@ const resolveKujiraAddr = async (addr, cb) => {
     .catch(() => cb(addr))
 }
 
+
+const getDomainStatusColor = (status) => {
+  switch (status) {
+    case "Active":
+      return "text-light"
+    case "Expiring":
+      return "text-warning"
+    case "Expired":
+      return "text-primary-dark"
+  }
+}
+
 const getDomainStatus = (expiration) => {
-  return "Active"
+  const now = getCurrentTimeSeconds()
+  if (now < expiration) {
+    return "Active"
+  } else if (now < (expiration + registrarGraceDuration)) {
+    return "Expiring"
+  } else {
+    return "Expired"
+  }
 }
 
 const getOwnedDomains = (addr, cb) => {
@@ -60,8 +102,8 @@ const getOwnedDomains = (addr, cb) => {
           .then(info => {
             return {
               name: token,
-              status: getDomainStatus(info.extension.expiration),
-              expiration: info.extension.expiration,
+              status: getDomainStatus(Number(info.extension.expiration)),
+              expiration: new Date(info.extension.expiration * 1000),
             }
           })
         ))
@@ -71,103 +113,136 @@ const getOwnedDomains = (addr, cb) => {
     .catch(() => cb(false))
 }
 
+const getTopAuctions = (cb) => auctions
+  .then(auc => auc
+    .auctions({})
+    .then(res => Promise.all(res.auctions
+      .map(auction => auc
+        .bid({ id: auction.bid_id })
+        .then(bid => {
+          return {
+            domain: auction.domain,
+            top_bid_amount: bid.amount,
+            status: getAuctionStatus(Number(auction.open_start)),
+          }
+        })
+      ))
+      .then(topAuctions => cb(topAuctions))
+    )
+  )
+  .catch(() => cb(false))
+
 const IndexPage = () => {
   const [addr, setAddr] = React.useState(false)
   const [name, setName] = React.useState(false)
   const [ownedDomains, setOwnedDomains] = React.useState(false)
+  const [topAuctions, setTopAuctions] = React.useState(false)
   const getWallet = () => {
-    getKeplrAddr((a) => {
+    getWalletAddr((a) => {
       setAddr(a)
       resolveKujiraAddr(a, setName)
       getOwnedDomains(a, setOwnedDomains)
     })
   }
-  React.useEffect(getWallet)
+  React.useEffect(getWallet, [])
+  React.useEffect(() => {
+    getTopAuctions(setTopAuctions)
+    const interval = setInterval(() => getTopAuctions(setTopAuctions), 3000)
+    return () => clearInterval(interval)
+  }, [])
   window.addEventListener("keplr_keystorechange", getWallet)
 
   return (
     <Layout walletName={name} walletAddr={addr}>
       <Row>
-        <Col sm={12} lg={7} xl={8}>
-          <Card bg="grey" className="bg-opacity-10 mb-3">
-            <Card.Title style={{fontSize: "1.8rem"}} className="text-light p-3 mb-1">Search Domains</Card.Title>
-            <Card.Body className="pt-0 ps-5 pe-5">
-              <Form>
-                <InputGroup>
-                  <Form.Control
-                    type="text"
-                    placeholder="example.kuji"
-                    className="text-light bg-dark bg-opacity-75 border-grey border-opacity-25"
-                  >
-                  </Form.Control>
-                  <Button variant="outline-primary-light" className="border-opacity-75">Search</Button>
-                </InputGroup>
-              </Form>
-            </Card.Body>
-          </Card>
-          <Card bg="grey" className="bg-opacity-10">
-            <Card.Title style={{fontSize: "1.8rem"}} className="text-light p-3 mb-1">My Domains</Card.Title>
-            <Card.Body className="pt-0 ps-5 pe-5">
-                {
-                  ownedDomains && ownedDomains.length > 0 ?
-                    <Table variant="grey" size="sm" borderless>
-                      <thead className="text-primary-light fw-bold">
-                        <tr>
-                          <td>Name</td>
-                          <td className="text-center">Status</td>
-                          <td className="text-end">Expiration</td>
-                        </tr>
-                      </thead>
-                      <tbody className="text-light">
-                        {
-                          ownedDomains.map(domain => <tr>
-                            <td><a href={"/" + domain.name} className="text-reset text-decoration-none d-block">{domain.name}</a></td>
-                            <td className="text-center">{domain.status}</td>
-                            <td className="text-end">{domain.expiration}</td>
-                          </tr>)
-                        }
-                      </tbody>
-                    </Table>
-                    : <p className="text-grey text-center">No domains found in this wallet yet. Buy one and it will show up here!</p>
-                }
-            </Card.Body>
-          </Card>
+        <Col sm={12} lg={6} xl={7}>
+          <Panel title="Find Domains">
+            <DomainSearch contracts={contracts}/>
+          </Panel>
+          <Panel title="My Domains">
+            {
+              !ownedDomains ?
+                <p className="text-grey text-center">Loading domains...</p>
+                : ownedDomains.length < 1 ?
+                  <p className="text-grey text-center">No domains found in this wallet yet. Buy one and it will show up here!</p>
+                  : <Table variant="grey" size="sm" borderless striped hover>
+                    <thead className="text-muted">
+                      <tr>
+                        <td>Name</td>
+                        <td className="text-center d-none d-xl-block">Status</td>
+                        <td className="text-end">Expiration</td>
+                        <td className="text-end"><ChevronRight/></td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        ownedDomains.map(domain => <tr className={getDomainStatusColor(domain.status)}>
+                          <td className="text-start text-reset pe-0">
+                            <a href={"/" + domain.name} className="text-reset text-decoration-none d-block">
+                              <FormatName>{domain.name}</FormatName>
+                            </a>    
+                          </td>
+                          <td className="text-center text-reset ps-0 pe-0 d-none d-xl-block">
+                            <a href={"/" + domain.name} className="text-reset text-decoration-none d-block">
+                              {domain.status}
+                            </a>
+                          </td>
+                          <td className="text-end text-reset ps-0">
+                            <a href={"/" + domain.name} className="text-reset text-decoration-none d-block">
+                              {domain.expiration.toLocaleDateString()}
+                            </a>
+                          </td>
+                          <td className="text-end text-grey"><ChevronRight/></td>
+                        </tr>)
+                      }
+                    </tbody>
+                  </Table>
+            }
+          </Panel>
         </Col>
         <Col>
-          <Card bg="grey" className="bg-opacity-10">
-            <Card.Title style={{fontSize: "1.8rem"}} className="text-light p-3 mb-1">Top Auctions</Card.Title>
-            <Card.Body className="pt-0 pb-0">
-              <Table variant="grey" size="sm" borderless className="text-light">
-                <tbody>
-                  <tr className="fw-bold">
-                    <td className="text-grey">1</td>
-                    <td className="text-primary-light"><a href="/mintthemoon.kuji" className="text-reset text-decoration-none d-block">mintthemoon.kuji</a></td>
-                    <td className="text-end">420.69 <span className="text-muted">USK</span></td>
-                  </tr>
-                  <tr>
-                    <td className="text-grey">2</td>
-                    <td><a href="/codehans.kuji" className="text-reset text-decoration-none d-block">codehans.kuji</a></td>
-                    <td className="text-end">69.99 <span className="text-muted">USK</span></td>
-                  </tr>
-                  <tr>
-                    <td className="text-grey">3</td>
-                    <td>test1.kuji</td>
-                    <td className="text-end">25.01 <span className="text-muted">USK</span></td>
-                  </tr>
-                  <tr>
-                    <td className="text-grey">4</td>
-                    <td>test2.kuji</td>
-                    <td className="text-end">24.00 <span className="text-muted">USK</span></td>
-                  </tr>
-                  <tr>
-                    <td className="text-grey">5</td>
-                    <td>test3.kuji</td>
-                    <td className="text-end">23.50 <span className="text-muted">USK</span></td>
-                  </tr>
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
+          <Panel title="Top Auctions">
+            {
+              !topAuctions ?
+                <p className="text-grey text-center">Loading auctions...</p>
+                : topAuctions.length < 1 ?
+                  <p className="text-grey text-center">No auctions found.</p>
+                  : <Table variant="grey" size="sm" borderless striped hover>
+                    <thead className="text-muted">
+                      <tr>
+                        <td>#</td>
+                        <td>Name</td>
+                        <td>Status</td>
+                        <td className="text-end">Price</td>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        topAuctions
+                          .map((auction, i) => <tr>
+                            <td className="text-muted">{i + 1}</td>
+                            <td>
+                              <a href={"/" + auction.domain} className="text-light text-decoration-none d-block">
+                                <FormatName>{auction.domain}</FormatName>
+                              </a>
+                            </td>
+                            <td><a href={"/" + auction.domain} className="text-light text-decoration-none d-block">{auction.status}</a></td>
+                            <td className="text-end text-light">
+                              <a href={"/" + auction.domain} className="text-light text-decoration-none d-block">
+                                <Denom
+                                  amount={auction.top_bid_amount}
+                                  base={denomBase}
+                                  display={denomDisplay}
+                                  exponent={denomExponent}
+                                />
+                              </a>
+                            </td>
+                          </tr>)
+                      }
+                    </tbody>
+                  </Table>
+            }
+          </Panel>
         </Col>
       </Row>
     </Layout>
