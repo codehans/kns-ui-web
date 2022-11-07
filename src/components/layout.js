@@ -48,9 +48,7 @@ const Layout = ({walletName, walletAddr, children}) => {
       </Container>
       <Container
         style={{
-          marginTop: "6rem",
-          position: "fixed",
-          bottom: "0"
+          marginTop: "2rem",
         }}
         fluid
         className="p-0">

@@ -1,4 +1,5 @@
 import * as React from "react"
+import Button from "react-bootstrap/Button"
 import Card from "react-bootstrap/Card"
 import Col from "react-bootstrap/Col"
 import Container from "react-bootstrap/Container"
@@ -67,10 +68,17 @@ const DomainDetail = ({domain, contracts}) => {
   React.useEffect(() => { getToken(domain, contracts.registrar, setToken)}, [domain, contracts.registrar])
 
   return (
-    <Container style={{borderRadius: "0.2em"}} fluid className="bg-dark bg-opacity-75 mt-1">
+    <Container style={{borderRadius: "0.2em"}} fluid className="bg-dark bg-opacity-75 mt-1 pt-2 pb-1 ps-3 pe-3">
       <Row>
-        <Col>
-          <h5 className="text-light mt-1">{domain}</h5>
+        <Col className="pb-3">
+          <h5 style={{marginTop: "0.1em"}} className="text-light d-inline-block">{domain}</h5>
+          <Button
+            style={{float: "right", fontSize: "0.75em"}}
+            variant="outline-secondary"
+            href={`/${domain}`}
+          >
+            Details
+          </Button>
         </Col>
       </Row>
       <Row>
@@ -164,7 +172,7 @@ const DomainDetail = ({domain, contracts}) => {
                   : !token ?
                     <p className="text-grey">No token found.</p>
                     : <ul style={{listStyle: "none"}} className="ps-0 mb-0 text-muted">
-                      <li>Top Bid: 
+                      <li>Owner: 
                         <span style={{float: "right"}} className="text-light">
                           <FormatName>{token.owner}</FormatName>
                         </span>

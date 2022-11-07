@@ -22,12 +22,13 @@ class SortedTable extends React.Component {
     this.handleSort = this.handleSort.bind(this)
   }
 
-  getCellContent(entry, row) {
+  getCellContent(entry, i, row) {
+    const display = this.props.view[i] ? this.props.view[i](entry) : entry
     return this.props.rowLinks ?
       <a href={this.props.rowLinks(row)} className="text-reset text-decoration-none d-block">
-        {typeof entry == "string" ? entry : entry()}
+        {display}
       </a>
-      : typeof entry == "string" ? entry : entry()
+      : display
   }
 
   getCellPadding(i) {  // remove gaps between cells for row links
@@ -42,7 +43,9 @@ class SortedTable extends React.Component {
 
   getRowStyle(row) {
     return this.props.rowStyles ?
-      this.props.rowStyles(row)
+      typeof this.props.rowStyles == "string" ?
+        this.props.rowStyles
+        : this.props.rowStyles(row)
       : ""
   }
 
@@ -72,6 +75,12 @@ class SortedTable extends React.Component {
         sortIndex: this.getSortIndex(sortCol),
         sortReverse: false,
       })
+    }
+  }
+
+  componentDidUpdate(prev) {
+    if (this.props.data.length != prev.data.length) {
+      this.handleSort(null, this.props.sortCol)
     }
   }
   
@@ -119,7 +128,7 @@ class SortedTable extends React.Component {
                   <td className={
                     [this.getRowStyle(row), this.getCellStyle(i), this.getCellPadding(i)].join(" ")
                   }>
-                    <span className={this.getCellStyle(i)}>{this.getCellContent(entry, row)}</span>
+                    <span className={this.getCellStyle(i)}>{this.getCellContent(entry, i, row)}</span>
                   </td>
                 )
               }

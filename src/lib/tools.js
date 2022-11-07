@@ -1,5 +1,7 @@
 import * as vars from "./vars"
 
+const getAuctionCloseSeconds = (openStart) => Number(openStart) + vars.auctionsOpenDuration
+
 const getAuctionStatusWeight = (status) => {
   switch (status) {
     case "Open":
@@ -14,7 +16,7 @@ const getAuctionStatusWeight = (status) => {
 const getAuctionStatus = (openStart) => {
   if (!openStart) {
     return "Deposit"
-  } else if (getCurrentTimeSeconds() < (openStart + vars.auctionsOpenDuration)) {
+  } else if (getCurrentTimeSeconds() < getAuctionCloseSeconds(openStart)) {
     return "Open"
   } else {
     return "Closed"
@@ -24,6 +26,7 @@ const getAuctionStatus = (openStart) => {
 const getCurrentTimeSeconds = () => Math.floor(Date.now() / 1000)
 
 export {
+  getAuctionCloseSeconds,
   getAuctionStatus,
   getAuctionStatusWeight,
   getCurrentTimeSeconds,
