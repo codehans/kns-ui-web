@@ -7,6 +7,7 @@ import Row from "react-bootstrap/Row"
 
 import Denom from "./denom"
 import FormatName from "../components/format-name"
+import * as contracts from "../lib/contracts"
 import { getAuctionStatus } from "../lib/tools"
 import { denomBase, denomDisplay, denomExponent } from "../lib/vars"
 
@@ -60,16 +61,16 @@ const getDisplayKind = (kind) => {
   }
 }
 
-const DomainDetail = ({domain, contracts}) => {
-  const [auction, setAuction] = React.useState(false)
+const DomainDetail = ({domain}) => {
+  const [auction, setAuction] = React.useState(0)
   const [record, setRecord] = React.useState(0)
   const [token, setToken] = React.useState(0)
-  React.useEffect(() => { getAuction(domain, contracts.auctions, setAuction) }, [domain, contracts.auctions])
-  React.useEffect(() => { getRecord(domain, contracts.registry, setRecord)}, [domain, contracts.registry])
-  React.useEffect(() => { getToken(domain, contracts.registrar, setToken)}, [domain, contracts.registrar])
+  React.useEffect(() => { getAuction(domain, contracts.auctions, setAuction) }, [domain])
+  React.useEffect(() => { getRecord(domain, contracts.registry, setRecord)}, [domain])
+  React.useEffect(() => { getToken(domain, contracts.registrar, setToken)}, [domain])
 
   return (
-    <Container style={{borderRadius: "0.2em"}} fluid className="bg-dark bg-opacity-75 mt-1 pt-2 pb-1 ps-3 pe-3">
+    <Container style={{borderRadius: "0.2em"}} fluid className="bg-dark bg-opacity-75 mt-2 pt-2 pb-3 ps-3 pe-3 shadow-light">
       <Row>
         <Col className="pb-3">
           <h5 style={{marginTop: "0.1em"}} className="text-light d-inline-block">{domain}</h5>
@@ -77,6 +78,7 @@ const DomainDetail = ({domain, contracts}) => {
             style={{float: "right", fontSize: "0.75em"}}
             variant="outline-secondary"
             href={`/${domain}`}
+            className="border-opacity-75"
           >
             Details
           </Button>
@@ -84,7 +86,7 @@ const DomainDetail = ({domain, contracts}) => {
       </Row>
       <Row>
         <Col>
-          <Card bg="dark" className="p-2 mb-2">
+          <Card bg="dark" className="p-3 rounded-0">
             <Card.Title className="mb-1 text-grey">Auction</Card.Title>
               <Card.Body className="p-0">
               {
@@ -137,9 +139,9 @@ const DomainDetail = ({domain, contracts}) => {
             </Card>
         </Col>
       </Row>
-      <Row>
+      <Row className="gx-0">
         <Col md={6}>
-          <Card bg="dark" className="p-2 mb-2">
+          <Card bg="dark" className="p-3 h-100 rounded-0 border-grey border-start-0 border-bottom-0 border-end-0 border-md-end">
             <Card.Title className="mb-1 text-grey">Record</Card.Title>
             <Card.Body className="p-0">
             {
@@ -164,7 +166,7 @@ const DomainDetail = ({domain, contracts}) => {
           </Card>
         </Col>
         <Col md={6}>
-          <Card bg="dark" className="p-2 mb-2">
+          <Card bg="dark" className="p-3 h-100 rounded-0 border-grey border-start-0 border-end-0 border-bottom-0">
             <Card.Title className="mb-1 text-grey">Token</Card.Title>
               <Card.Body className="p-0">
               {

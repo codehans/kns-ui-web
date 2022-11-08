@@ -7,7 +7,6 @@ import DomainSearch from "../components/domain-search"
 import Layout from "../components/layout"
 import SortedTable from "../components/sorted-table"
 import Panel from "../components/panel"
-import * as contracts from "../lib/contracts"
 import { formatDateShort, formatDateTimeShort, formatDenom, formatName } from "../lib/format"
 import {
   compareAuctionStatus,
@@ -58,7 +57,7 @@ const IndexPage = () => {
       <Row>
         <Col sm={12} xl={7}>
           <Panel title="Find Domains">
-            <DomainSearch contracts={contracts}/>
+            <DomainSearch/>
           </Panel>
           <Panel title="My Domains">
             {

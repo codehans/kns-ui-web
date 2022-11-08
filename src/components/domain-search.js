@@ -36,14 +36,14 @@ class DomainSearch extends React.Component {
               placeholder="example.kuji"
               value={this.state.searchInput}
               onChange={this.handleChange}
-              className="text-light bg-dark bg-opacity-75 border-grey border-opacity-25"
+              className="text-light bg-dark bg-opacity-75 border-primary border-opacity-75"
             />
             <Button variant="outline-primary" className="border-opacity-75" type="submit">Search</Button>
           </InputGroup>
         </Form>
         {
           this.state.showResults ?
-            <DomainDetail domain={this.state.search} contracts={this.props.contracts}/>
+            <DomainDetail domain={this.state.search}/>
             : <span></span>
         }
       </Container>

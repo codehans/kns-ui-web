@@ -28,6 +28,32 @@ $font-weight-normal: 700;
 
 @import '~bootstrap/scss/bootstrap.scss';
 
+@each $breakpoint in map-keys($grid-breakpoints) {
+    @include media-breakpoint-up($breakpoint) {
+      $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
+  
+      .border#{$infix}-top { border-top-width: $border-width !important; border-style: solid !important; }
+      .border#{$infix}-end { border-right-width: $border-width !important; border-style: solid !important; }
+      .border#{$infix}-bottom { border-bottom-width: $border-width !important; border-style: solid !important; }
+      .border#{$infix}-start { border-left-width: $border-width !important; border-style: solid !important; }
+  
+      .border#{$infix}-top-0 {    border-top-width: 0 !important; }
+      .border#{$infix}-end-0 {  border-right-width: 0 !important; }
+      .border#{$infix}-bottom-0 { border-bottom-width: 0 !important; }
+      .border#{$infix}-start-0 {   border-left-width: 0 !important; }
+  
+      .border#{$infix}-x {
+        border-left: $border-width solid $border-color !important;
+        border-right: $border-width solid $border-color !important;
+      }
+  
+      .border#{$infix}-y {
+        border-top: $border-width solid $border-color !important;
+        border-bottom: $border-width solid $border-color !important;
+      }
+    }
+}
+
 .btn {
     border-radius: 0.2em;
 }
@@ -68,7 +94,6 @@ $font-weight-normal: 700;
 
 .card {
     border-radius: 0.2em;
-    box-shadow: 0.2em 0.2em 0.2em rgba(0, 0, 0, 0.2);
 }
 
 .form-control {
@@ -107,4 +132,12 @@ $font-weight-normal: 700;
     border-width: 1px;
     border-style: solid;
     box-shadow: 0.12em 0.2em 0.2em rgba(0, 0, 0, 0.2);
+}
+
+.shadow-light {
+    box-shadow: 0.12em 0.2em 0.2em rgba(0, 0, 0, 0.2);
+}
+
+.shadow-heavy {
+    box-shadow: 0.2em 0.2em 0.2em rgba(0, 0, 0, 0.2);
 }
