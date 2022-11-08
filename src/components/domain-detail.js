@@ -55,8 +55,9 @@ const getDisplayKind = (kind) => {
       return "IPv6"
     case "ipfs":
       return "IPFS"
+    default:
+      return kind.toUpperCase()
   }
-  return kind.toUpperCase()
 }
 
 const DomainDetail = ({domain, contracts}) => {

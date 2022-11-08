@@ -1,6 +1,7 @@
 import * as React from "react"
 import Table from "react-bootstrap/Table"
-import { FaSortDown, FaSortUp, FaSort } from "react-icons/fa"
+import { FaSortDown, FaSortUp } from "react-icons/fa"
+import isEqual from "lodash/isEqual"
 
 class SortedTable extends React.Component {
   constructor(props) {
@@ -12,7 +13,7 @@ class SortedTable extends React.Component {
     }
     if (this.props.sort) {
       const sortCol = this.props.sortDefault ? this.props.sortDefault : 0
-      const sortIndex = this.getSortIndex(sortCol)
+      const sortIndex = this.getSortIndex(this.state.sortIndex, sortCol)
       this.state = { sortIndex: sortIndex, sortCol: sortCol, sortReverse: false }
     }
     this.getCellContent = this.getCellContent.bind(this)
@@ -55,8 +56,8 @@ class SortedTable extends React.Component {
       : ""
   }
 
-  getSortIndex(sortCol) {
-    return [...this.state.sortIndex]
+  getSortIndex(index, sortCol) {
+    return [...index]
       .sort((x, y) => {
         const dx = this.props.data[x][sortCol]
         const dy = this.props.data[y][sortCol]
@@ -72,15 +73,20 @@ class SortedTable extends React.Component {
     } else {
       this.setState({
         sortCol: sortCol,
-        sortIndex: this.getSortIndex(sortCol),
+        sortIndex: this.getSortIndex(this.state.sortIndex, sortCol),
         sortReverse: false,
       })
     }
   }
 
   componentDidUpdate(prev) {
-    if (this.props.data.length != prev.data.length) {
-      this.handleSort(null, this.props.sortCol)
+    if (!isEqual(this.props.data, prev.data)) {
+      const sortCol = this.state.sortCol
+      this.setState({
+        sortCol: sortCol,
+        sortIndex: this.getSortIndex(Array(this.props.data.length).keys(), sortCol),
+        sortReverse: this.state.sortReverse,
+      })
     }
   }
   
@@ -92,19 +98,25 @@ class SortedTable extends React.Component {
           {
             this.props.headers.map((header, i) => 
               <td className={[this.getCellStyle(i), this.getCellPadding(i)].join(" ")}>
-                <span style={{cursor: "pointer", userSelect: "none"}} onClick={(e) => this.handleSort(e, i)}>
+                <span
+                  style={{cursor: "pointer", userSelect: "none"}}
+                  onClick={(e) => this.handleSort(e, i)}
+                  onKeyPress={(e) => { if (e.key === "Enter") {this.handleSort(e, i)} }}
+                  role="button"
+                  tabIndex={0}
+                >
                   {typeof header == "string" ? header : header()}&nbsp;
-                  <span style={{position: "relative", display: "inline-block"}}>
-                    {
-                      this.state.sortCol === i ?
-                        this.state.sortReverse ?
-                          <FaSortUp style={{position: "absolute", marginTop: "0.36em"}} className="text-secondary"/>
-                          : <FaSortDown style={{position: "absolute", marginTop: "0.36em"}} className="text-secondary"/>
-                        : <span></span>
-                    }
-                    <FaSort/>
+                  <span style={{position: "relative", width: "1em"}}>
+                    <FaSortUp
+                      style={{position: "absolute", marginTop: "0.25em"}}
+                      className={this.state.sortCol === i && this.state.sortReverse ? "text-secondary" : "text-muted"}
+                    />
+                    <FaSortDown
+                      style={{position: "absolute", marginTop: "0.23em"}}
+                      className={this.state.sortCol === i && !this.state.sortReverse ? "text-secondary" : "text-muted"}
+                    />
+                    <span>&nbsp;&nbsp;&nbsp;</span>
                   </span>
-                  
                 </span>
               </td>
             )
@@ -121,7 +133,7 @@ class SortedTable extends React.Component {
                 return this.props.data[this.state.sortIndex[i]]
               }
             })
-            .map(row => 
+            .map(row => !row ? false :
               <tr>
               {
                 row.map((entry, i) =>

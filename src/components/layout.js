@@ -24,7 +24,12 @@ const Layout = ({walletName, walletAddr, children}) => {
     >
       <Navbar style={{minHeight: "8rem"}} bg="dark" variant="dark" fixed="top" expand="lg" className="bg-opacity-75">
         <Container>
-          <img src={KujiLogo} style={{height: "3.6em", paddingRight: "1em"}} className="d-none d-sm-block"/>
+          <img
+            alt="KUJI logo"
+            src={KujiLogo}
+            style={{height: "3.6em", paddingRight: "1em"}}
+            className="d-none d-sm-block"
+          />
           <Navbar.Brand
             style={{fontVariant: "small-caps", fontSize: "1.6em", fontWeight: "bold", paddingLeft: "0.5em"}}
             href="/"
