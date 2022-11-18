@@ -10,9 +10,9 @@ const FormatName = ({children, len = 16}) => {
     return <span>{children}</span>
   } else {
     const display = [
-        children.slice(0, 9),
+        children.slice(0, 6),
         "...",
-        children.slice(children.length - 7),
+        children.slice(children.length - 6),
     ].reduce((x, y) => x.concat(y))
     return (
       <OverlayTrigger placement="bottom" overlay={<Tooltip>{children}</Tooltip>}>

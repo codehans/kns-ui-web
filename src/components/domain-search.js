@@ -1,54 +1,60 @@
+import { atom, useAtom } from "jotai"
 import * as React from "react"
-import Button from "react-bootstrap/Button"
+import Col from "react-bootstrap/Col"
 import Container from "react-bootstrap/Container"
 import Form from "react-bootstrap/Form"
-import InputGroup from "react-bootstrap/InputGroup"
-import DomainDetail from "./domain-detail"
+import Row from "react-bootstrap/Row"
+import {
+  auctionAtom,
+  auctionsSignerAtom,
+  domainAtom,
+  domainInfoAtom,
+  globalRefreshAtom,
+  recordAtom,
+  userBalanceAtom,
+  userBidsAtom,
+  userDomainBidAtom,
+  tokenAtom
+} from "../lib/data"
 
-class DomainSearch extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { searchInput: "", showResults: false }
-    this.handleChange = this.handleChange.bind(this)
-    this.handleSubmit = this.handleSubmit.bind(this)
+import DomainModal from "./domain-modal"
+
+const searchAtom = atom("")
+
+const DomainSearch = () => {
+  const [domain, setDomain] = useAtom(domainAtom)
+  const [search, setSearch] = useAtom(searchAtom)
+
+  const handleChange = (event) => {
+    setSearch(event.target.value)
   }
-
-  handleChange(event) {
-    this.setState({ searchInput: event.target.value })
-  }
-
-  handleSubmit(event) {
+  const handleSearch = (event) => {
     event.preventDefault()
-    if (this.state.searchInput.length < 1) {
-      this.setState({ showResults: false })
-    } else {
-      this.setState({ search: this.state.searchInput, showResults: true, searchInput: "" })
-    }
+    setDomain(search)
+    setSearch("")
   }
-  
-  render() {
-    return (
-      <Container fluid>
-        <Form onSubmit={this.handleSubmit}>
-          <InputGroup>
+
+  return (
+    <Container fluid>
+      <Form onSubmit={handleSearch}>
+        <Row className="gx-0">
+          <Col sm="9" className="px-1 ms-auto mt-2">
             <Form.Control
               type="text"
-              placeholder="example.kuji"
-              value={this.state.searchInput}
-              onChange={this.handleChange}
-              className="text-light bg-dark bg-opacity-75 border-primary border-opacity-75"
+              placeholder="yourname.kuji"
+              value={search}
+              onChange={handleChange}
+              className="text-light bg-dark md-input"
             />
-            <Button variant="outline-primary" className="border-opacity-75" type="submit">Search</Button>
-          </InputGroup>
-        </Form>
-        {
-          this.state.showResults ?
-            <DomainDetail domain={this.state.search}/>
-            : <span></span>
-        }
-      </Container>
-    )
-  }
+          </Col>
+          <Col sm="auto" className="px-1 me-auto mt-2">
+            <button className="md-button md-button--full" type="submit">Search</button>
+          </Col>
+        </Row>
+      </Form>
+      <DomainModal/>
+    </Container>
+  )
 }
 
 export default DomainSearch

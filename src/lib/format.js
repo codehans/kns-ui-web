@@ -13,4 +13,14 @@ const formatDenom = x => <Denom amount={x} base={denomBase} display={denomDispla
 
 const formatName = x => <FormatName>{x}</FormatName>
 
-export { formatDateShort, formatDateTimeShort, formatDenom, formatName }
+const formatNameDomainModalTrigger = setDomain => x => <span
+    onClick={() => setDomain(x)}
+    onKeyUp={(e) => { if (e.key === "Enter") { setDomain(x) }}}
+    style={{cursor: "pointer"}}
+    role="button"
+    tabIndex="0"
+>
+  {formatName(x)}
+</span>
+
+export { formatDateShort, formatDateTimeShort, formatDenom, formatName, formatNameDomainModalTrigger }

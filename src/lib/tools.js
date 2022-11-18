@@ -1,5 +1,5 @@
 import * as vars from "./vars"
-import { auctions, registrar, registry } from "../lib/contracts"
+import { auctions, registrar, registry } from "./contracts"
 
 const compareAuctionStatus = (x, y) => getAuctionStatusWeight(y) - getAuctionStatusWeight(x)
 
@@ -9,7 +9,7 @@ const compareNumber = (x, y) => Number(y) - Number(x)
 
 const compareString = (x, y) => x.localeCompare(y)
 
-const getAuctionCloseSeconds = (openStart) => Number(openStart) + vars.auctionsOpenDuration
+const getAuctionCloseSeconds = (openStart) => !openStart ? null : Number(openStart) + vars.auctionsOpenDuration
 
 const getAuctionStatusWeight = (status) => {
   switch (status) {
@@ -34,33 +34,59 @@ const getAuctionStatus = (openStart) => {
   }
 }
 
+const getAuctionsConfig = async () => auctions.then(a => a.config())
+
+const getAuction = async (domain) => !domain ? null : auctions
+  .then(a => a
+    .auction({ domain: domain })
+    .then(auction => a
+      .bid({ id: auction.bid_id })
+      .then(bid => getAuctionDetails(auction, bid))
+    )
+  )
+  .catch(console.log)
+
+const getRecord = async (domain) => !domain ? null : registry
+  .then(r => r.record({ name: domain }))
+  .catch(console.log)
+
+const getToken = async (domain) => !domain ? null : registrar
+  .then(r => Promise.all([
+    r.nftInfo({ tokenId: domain }),
+    r.ownerOf({ tokenId: domain }),
+  ]))
+  .then(res => {
+    return {
+      owner: res[1].owner,
+      expiration: res[0].extension.expiration,
+      status: getDomainStatus(res[0].extension.expiration)
+    }
+  })
+  .catch(console.log)
+
+const getDomainInfo = async (domain) => !domain ? null : registrar
+  .then(r => r.domainInfo({ name: domain }))
+  .catch(console.log)
+
 const getCurrentTimeSeconds = () => Math.floor(Date.now() / 1000)
 
-const getKeplrAddr = async (cb) => window.keplr
-  .enable("harpoon-4")
-  .then(() => window
-    .getOfflineSigner("harpoon-4")
-    .getAccounts()
-    .then(accounts => cb(accounts[0].address))
-  )
+const getWalletSignerKeplr = async () => window.keplr
+  .enable(vars.chainId)
+  .then(() => window.getOfflineSigner(vars.chainId))
+  .catch(console.log)
 
-const getWalletAddr = async(cb) => {
+const getWalletSigner = () => {
   if (window.keplr) {
-    getKeplrAddr(cb)
+    return getWalletSignerKeplr()
   } else {
-    cb(false)
+    return null
   }
 }
 
-const resolveKujiraAddr = async (addr, cb) => {
-  if (!addr) {
-    cb(false)
-  }
-  registry
-    .then(reg => reg.kujiraAddr({ addr: addr }))
-    .then(res => cb(res.name))
-    .catch(() => cb(addr))
-}
+const resolveKujiraAddr = async (addr) => !addr ? null : registry
+  .then(r => r.kujiraAddr({ addr: addr }))
+  .then(res => res.name)
+  .catch(() => addr)
 
 
 const getDomainStatusColor = (status) => {
@@ -90,10 +116,11 @@ const getDomainStatusWeight = (status) => {
 }
 
 const getDomainStatus = (expiration) => {
+  const exp = Number(expiration)
   const now = getCurrentTimeSeconds()
-  if (now < expiration) {
+  if (now < exp) {
     return "Active"
-  } else if (now < (expiration + vars.registrarGraceDuration)) {
+  } else if (now < (exp + vars.registrarGraceDuration)) {
     return "Expiring"
   } else {
     return "Expired"
@@ -123,14 +150,10 @@ const getUserDomains = (addr, cb) => {
     .catch(() => cb(false))
 }
 
-const getUserBids = (addr, cb) => {
-  if (!addr) {
-    cb(false)
-  }
-  auctions
-    .then(auc => auc.bidsByBidder({ bidder: addr })
+const getUserBids = (addr, cb) => !addr ? null : auctions
+    .then(a => a.bidsByBidder({ bidder: addr })
       .then(res => Promise.all(res.bids
-        .map(bid => auc
+        .map(bid => a
           .auction({ id: bid.auction_id })
           .then(auction => {
             return {
@@ -141,90 +164,74 @@ const getUserBids = (addr, cb) => {
             }
           })
         ))
-        .then(bids => cb(bids))
       )
     )
-    .catch((err) => cb(false))
+    .catch(console.log)
+
+const getTopAuctions = async (state) => auctions
+  .then(a => a.auctions({ state: state })
+    .then(res => Promise.all(res.auctions.map(auction => a
+        .bid({ id: auction.bid_id })
+        .then(bid => getAuctionDetails(auction, bid))
+    )))
+  )
+  .catch(console.log)
+
+const getTopAuctionsDeposit = () => getTopAuctions("deposit")
+
+const getTopAuctionsOpen = () => getTopAuctions("open")
+
+const getTopAuctionsClosed = () => getTopAuctions("closed")
+
+const getRecordDisplayKind = (kind) => {
+  switch (kind) {
+    case "kujira_addr":
+      return "Address"
+    case "ip4":
+      return "IPv4"
+    case "ip6":
+      return "IPv6"
+    case "ipfs":
+      return "IPFS"
+    default:
+      return kind.toUpperCase()
+  }
 }
 
-const getOpenAuctions = (cb) => auctions
-  .then(auc => auc
-    .auctions({state: "open"})
-    .then(res => Promise.all(res.auctions
-      .map(auction => auc
-        .bid({ id: auction.bid_id })
-        .then(bid => {
-          return {
-            domain: auction.domain,
-            topBidAmount: bid.amount,
-            status: getAuctionStatus(auction.open_start),
-            close: getAuctionCloseSeconds(auction.open_start)
-          }
-        })
-      ))
-      .then(openAuctions => cb(openAuctions))
-    )
-  )
-  .catch(() => cb(false))
-
-const getClosedAuctions = (cb) => auctions
-  .then(auc => auc
-    .auctions({state: "closed"})
-    .then(res => Promise.all(res.auctions
-      .map(auction => auc
-        .bid({ id: auction.bid_id })
-        .then(bid => {
-          return {
-            domain: auction.domain,
-            topBidAmount: bid.amount,
-            topBidder: bid.bidder,
-            status: getAuctionStatus(auction.open_start),
-          }
-        })
-      ))
-      .then(closedAuctions => cb(closedAuctions))
-    )
-  )
-  .catch(() => cb(false))
-
-const getDepositAuctions = (cb) => auctions
-  .then(auc => auc
-    .auctions({state: "deposit"})
-    .then(res => Promise.all(res.auctions
-      .map(auction => auc
-        .bid({ id: auction.bid_id })
-        .then(bid => {
-          return {
-            domain: auction.domain,
-            topBidAmount: bid.amount,
-            total: auction.total,
-            status: getAuctionStatus(Number(auction.open_start)),
-          }
-        })
-      ))
-      .then(depositAuctions => cb(depositAuctions))
-    )
-  )
-  .catch(() => cb(false))
+const getAuctionDetails = (auction, bid) => {
+  return {
+    domain: auction.domain,
+    topBidAmount: bid.amount,
+    topBidder: bid.bidder,
+    totalBids: auction.total,
+    status: getAuctionStatus(auction.open_start),
+    closeTime: getAuctionCloseSeconds(auction.open_start),
+  }
+}
 
 export {
   compareAuctionStatus,
   compareDomainStatus,
   compareNumber,
   compareString,
+  getAuction,
   getAuctionCloseSeconds,
   getAuctionStatus,
   getAuctionStatusWeight,
+  getAuctionsConfig,
+  getRecord,
+  getToken,
+  getTopAuctionsOpen,
+  getTopAuctionsClosed,
+  getTopAuctionsDeposit,
   getCurrentTimeSeconds,
-  getClosedAuctions,
-  getDepositAuctions,
   getDomainStatus,
   getDomainStatusColor,
   getDomainStatusWeight,
-  getKeplrAddr,
-  getOpenAuctions,
+  getDomainInfo,
+  getRecordDisplayKind,
   getUserBids,
   getUserDomains,
-  getWalletAddr,
+  getWalletSigner,
   resolveKujiraAddr,
 }
