@@ -20,6 +20,7 @@
     "bootstrap": "^5.2.2",
     "gatsby": "^4.24.7",
     "gatsby-plugin-sass": "^5.24.0",
+    "grapheme-splitter": "^1.0.4",
     "jotai": "^1.10.0",
     "kujira.js": "git+https://github.com/mintthemoon/kujira.js",
     "lodash": "^4.17.21",
