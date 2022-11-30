@@ -1,5 +1,5 @@
 const auctionsContractAddr = "kujira1w5hw9059pxgfqsn9paes8ztld3lcs7cw8mwe4kq9n8d85l59895qkzs7ca"
-const auctionsOpenDuration = 3600
+const auctionsOpenDuration = 86400
 const denomFull = "factory/kujira1r85reqy6h0lu02vyz0hnzhv5whsns55gdt4w0d7ft87utzk7u0wqr4ssll/uusk"
 const denomBase = "uusk"
 const denomDisplay = "USK"
