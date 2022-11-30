@@ -10,7 +10,7 @@ const Denom = ({amount, base, display, exponent = 6, decimals = 2}) => {
       placement="bottom"
       overlay={<Tooltip>{amount}{base}</Tooltip>}
     >
-      <span>{normalized} <span className="text-grey">{display}</span></span>
+      <span>{normalized}&nbsp;<span className="text-grey">{display}</span></span>
     </OverlayTrigger>
   )
 }

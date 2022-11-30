@@ -14,13 +14,11 @@ const FormatDate = ({children, time=false}) => {
         </Tooltip>
       }>
         <span>
-          
-          {
-            time ?
-              <FormattedTime value={date} hour="numeric" minute="2-digit" month="numeric" day="numeric" hour12={true}/>
-              : <FormattedDate value={date} year="2-digit" month="numeric" day="numeric"/>
-          }
-          
+        {
+          time ?
+            <FormattedTime value={date} hour="numeric" minute="2-digit" month="numeric" day="numeric" hour12={true}/>
+            : <FormattedDate value={date} year="2-digit" month="numeric" day="numeric"/>
+        }
         </span>
       </OverlayTrigger>
     </IntlProvider>

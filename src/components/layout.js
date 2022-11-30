@@ -6,6 +6,7 @@ import Navbar from 'react-bootstrap/Navbar'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '@fontsource/montserrat'
 
+import '../styles/kujira-bundle.css'
 import '../styles/theme.scss'
 import KujiLogo from '../images/logo.svg'
 import WalletSelect from './wallet-select.js'
@@ -15,32 +16,31 @@ const Layout = ({walletName, walletAddr, children}) => {
     <Container
       fluid
       style={{
-        background: "#22242f",
+        background: "radial-gradient(at 60% 10%,rgb(34,36,47) 0%,rgb(22,23,33) 100%)",
         fontFamily: "Montserrat, Fira Sans, sans-serif",
         height: "100%",
         minHeight: "100vh",
         padding: "0px",
       }}
     >
-      <Navbar style={{minHeight: "8rem"}} bg="dark" variant="dark" fixed="top" expand="lg" className="bg-opacity-75">
-        <Container>
+      <Navbar style={{minHeight: "6rem"}} bg="transparent" variant="dark" fixed="top" expand="lg" className="page-header">
+        <Container fluid className="mx-2 mx-sm-5">
           <img
             alt="KUJI logo"
             src={KujiLogo}
-            style={{height: "3.6em", paddingRight: "1em"}}
-            className="d-none d-sm-block"
+            style={{height: "3.6em", paddingRight: "0.8em"}}
           />
           <Navbar.Brand
-            style={{fontVariant: "small-caps", fontSize: "1.6em", fontWeight: "bold", paddingLeft: "0.5em"}}
+            style={{fontVariant: "small-caps", fontSize: "1.8em", fontWeight: "bold", paddingLeft: "0.5em"}}
             href="/"
-            className="text-primary d-none d-md-block"
+            className="color-white d-none d-md-block"
           >
             Kujira Name System
           </Navbar.Brand>
           <Navbar.Brand
-            style={{fontSize: "1.6em", fontWeight: "bold", paddingLeft: "0.2em"}}
+            style={{fontSize: "1.6em", fontWeight: "bold"}}
             href="/"
-            className="text-primary d-block d-md-none"
+            className="text-light d-block d-md-none"
           >
             KNS
           </Navbar.Brand>
@@ -48,18 +48,19 @@ const Layout = ({walletName, walletAddr, children}) => {
           <WalletSelect name={walletName} addr={walletAddr}></WalletSelect>
         </Container>
       </Navbar>
-      <Container style={{paddingTop: "10rem",}}>
+      <Container style={{paddingTop: "8rem"}} fluid>
         {children}
       </Container>
       <Container
         style={{
-          marginTop: "2rem",
+          marginTop: "8rem",
+          height: "100%"
         }}
         fluid
         className="p-0">
-        <footer style={{height: "6rem"}} className="bg-dark bg-opacity-75">
-          <Row className="mx-5 pt-4">
-            <Col className="text-center mx-auto">
+        <footer style={{height: "8rem"}} className="page-footer">
+          <Row className="mx-5 pt-5">
+            <Col className="text-center text-grey mx-auto">
               footer content
             </Col>
           </Row>

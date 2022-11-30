@@ -2,159 +2,121 @@
 import * as React from "react"
 import Col from "react-bootstrap/Col"
 import Row from "react-bootstrap/Row"
+import { useAtom } from "jotai"
 
 import DomainSearch from "../components/domain-search"
 import Layout from "../components/layout"
 import SortedTable from "../components/sorted-table"
-import Panel from "../components/panel"
-import { formatDateShort, formatDateTimeShort, formatDenom, formatName } from "../lib/format"
+import { formatDateTimeShort, formatDenom, formatName, formatNameDomainModalTrigger } from "../lib/format"
 import {
-  compareAuctionStatus,
-  compareDomainStatus,
   compareNumber,
   compareString,
-  getClosedAuctions,
-  getDepositAuctions,
-  getDomainStatusColor,
-  getOpenAuctions,
-  getUserBids,
-  getUserDomains,
-  getWalletAddr,
-  resolveKujiraAddr,
+  getAuctionsConfig,
+  getTopAuctionsDeposit,
+  getTopAuctionsOpen,
+  getTopAuctionsClosed,
+  getWalletSigner,
 } from "../lib/tools"
+import {
+  auctionsConfigAtom,
+  domainAtom,
+  globalRefreshAtom,
+  topAuctionsClosedAtom,
+  topAuctionsDepositAtom,
+  topAuctionsOpenAtom,
+  walletSignerAtom,
+} from "../lib/data"
+import OpenAuctionsButton from "../components/open-auction-button"
 
 const IndexPage = () => {
-  const [addr, setAddr] = React.useState(false)
-  const [name, setName] = React.useState(false)
-  const [userDomains, setUserDomains] = React.useState(false)
-  const [userBids, setUserBids] = React.useState(false)
-  const [openAuctions, setOpenAuctions] = React.useState(false)
-  const [closedAuctions, setClosedAuctions] = React.useState(false)
-  const [depositAuctions, setDepositAuctions] = React.useState(false)
-  const getWallet = () => {
-    getWalletAddr((a) => {
-      setAddr(a)
-      resolveKujiraAddr(a, setName)
-      getUserDomains(a, setUserDomains)
-      getUserBids(a, setUserBids)
-    })
+  const [, setAuctionsConfig] = useAtom(auctionsConfigAtom)
+  const [topAuctionsDeposit, setTopAuctionsDeposit] = useAtom(topAuctionsDepositAtom)
+  const [topAuctionsOpen, setTopAuctionsOpen] = useAtom(topAuctionsOpenAtom)
+  const [topAuctionsClosed, setTopAuctionsClosed] = useAtom(topAuctionsClosedAtom)
+  const [, setDomain] = useAtom(domainAtom)
+  const [, setGlobalRefresh] = useAtom(globalRefreshAtom)
+  const [, setWalletSigner] = useAtom(walletSignerAtom)
+  const refresh = () => {
+    setAuctionsConfig(getAuctionsConfig())
+    setTopAuctionsDeposit(getTopAuctionsDeposit())
+    setTopAuctionsOpen(getTopAuctionsOpen())
+    setTopAuctionsClosed(getTopAuctionsClosed())
+    setWalletSigner(getWalletSigner())
   }
-  const tick = () => {
-    getWallet()
-    getOpenAuctions(setOpenAuctions)
-    getClosedAuctions(setClosedAuctions)
-    getDepositAuctions(setDepositAuctions)
-  }
-  React.useEffect(() => {
-    tick()
-    const interval = setInterval(() => tick(), 3000)
-    return () => clearInterval(interval)
-  }, [])
-  window.addEventListener("keplr_keystorechange", getWallet)
+  React.useEffect(() => { setGlobalRefresh({refresh: refresh}) }, [])
+  React.useEffect(refresh, [])
+  window.addEventListener("keplr_keystorechange", () => { setWalletSigner(getWalletSigner()) })
 
   return (
-    <Layout walletName={name} walletAddr={addr}>
-      <Row>
-        <Col sm={12} xl={7}>
-          <Panel title="Find Domains">
-            <DomainSearch/>
-          </Panel>
-          <Panel title="My Domains">
-            {
-              !userDomains ?
-                <p className="text-grey text-center">Loading domains...</p>
-                : userDomains.length < 1 ?
-                  <p className="text-grey text-center">No domains found in this wallet yet. Buy one and it will show up here!</p>
-                  : <Col className="ps-xl-5 pe-xl-5">
-                    <SortedTable
-                      headers={["Name", "Status", "Expiration"]}
-                      data={userDomains.map(d => [d.name, d.status, d.expiration])}
-                      view={[formatName, null, formatDateShort]}
-                      sort={[compareString, compareDomainStatus, compareNumber]}
-                      sortDefault={1}
-                      styles={["text-start", "text-start d-none d-md-block", "text-end"]}
-                      rowStyles={(row) => getDomainStatusColor(row[1])}
-                      rowLinks={(row) => `/${row[0]}`}
-                    />
-                  </Col>
-            }
-          </Panel>
-          <Panel title="My Bids">
-          {
-            !userBids ?
-              <p className="text-grey text-center">Loading bids...</p>
-              : userBids.length < 1 ?
-                <p className="text-grey text-center">No bids found.</p>
-                : <Col className="ps-xl-5 pe-xl-5">
-                  <SortedTable
-                    headers={["Name", "Status", "Bid"]}
-                    data={userBids.map(b => [b.domain, b.status, b.amount])}
-                    view={[formatName, null, formatDenom]}
-                    sort={[compareString, compareAuctionStatus, compareNumber]}
-                    sortDefault={1}
-                    styles={["text-start", "text-start d-none d-md-block", "text-end"]}
-                    rowLinks={row => `/${row[0]}`}
-                    rowStyles="text-light"
-                  />
-                </Col>
-          }
-          </Panel>
+    <Layout>
+      <Row style={{marginTop: "8rem", marginBottom: "10rem"}}>
+        <Col lg={6} xl={5} xs={10} className="mx-auto">
+          <h2 className="text-center color-white">Find your next domain</h2>
+          <p className="text-center color-grey lead">Place a bid to get started!</p>
+          <DomainSearch/>
         </Col>
-        <Col sm={12} xl={5}>
-          <Panel title="Open Auctions">
-            {
-              !openAuctions ?
-                <p className="text-grey text-center">Loading auctions...</p>
-                : openAuctions.length < 1 ?
-                  <p className="text-grey text-center">No open auctions.</p>
-                  : <SortedTable
-                    headers={["Name", "Price", "Close"]}
-                    data={openAuctions.map(a => [a.domain, a.topBidAmount, a.close])}
-                    view={[formatName, formatDenom, formatDateTimeShort]}
-                    sort={[compareString, compareNumber, compareNumber]}
-                    sortDefault={2}
-                    rowLinks={row => `/${row[0]}`}
-                    rowStyles="text-light"
-                    styles={["text-start", "text-end", "text-end"]}
-                  />
-            }
-          </Panel>
-          <Panel title="Pending Auctions">
-            {
-              !depositAuctions ?
-                <p className="text-grey text-center">Loading auctions...</p>
-                : depositAuctions.length < 1 ?
-                  <p className="text-grey text-center">No pending auctions.</p>
-                  : <SortedTable
-                    headers={["Name", "Top Bid", "Total Bids"]}
-                    data={depositAuctions.map(a => [a.domain, a.topBidAmount, a.total])}
-                    view={[formatName, formatDenom, formatDenom]}
-                    sort={[compareString, compareNumber, compareNumber]}
-                    sortDefault={2}
-                    rowLinks={row => `/${row[0]}`}
-                    rowStyles="text-light"
-                    styles={["text-start", "text-start d-none d-md-block", "text-end"]}
-                  />
-            }
-          </Panel>
-          <Panel title="Closed Auctions">
-            {
-              !closedAuctions ?
-                <p className="text-grey text-center">Loading auctions...</p>
-                : closedAuctions.length < 1 ?
-                  <p className="text-grey text-center">No closed auctions.</p>
-                  : <SortedTable
-                    headers={["Name", "Winner", "Price"]}
-                    data={closedAuctions.map(a => [a.domain, a.topBidder, a.topBidAmount])}
-                    view={[formatName, formatName, formatDenom]}
-                    sort={[compareString, compareString, compareNumber]}
-                    sortDefault={2}
-                    rowLinks={row => `/${row[0]}`}
-                    rowStyles="text-light"
-                    styles={["text-start", "text-start d-none d-md-block d-xl-none", "text-end"]}
-                  />
-            }
-          </Panel>
+      </Row>
+      <Row>
+        <Col className="text-center">
+          <h2 className="color-white mb-3">Auctions</h2>
+          <OpenAuctionsButton/>
+        </Col>
+      </Row>
+      <Row className="mx-sm-5 px-md-5 px-lg-0 mx-lg-0 mx-xl-5">
+        <Col lg={4} className="mt-5 px-3 px-xl-5">
+          <h3 className="text-center color-grey mb-3">Pending</h3>
+          {
+            topAuctionsDeposit ?
+              topAuctionsDeposit.length > 0 ?
+                <SortedTable
+                  headers={["Name", "Top Bid", "Total Bids"]}
+                  data={topAuctionsDeposit.map(a => [a.domain, a.topBidAmount, a.totalBids])}
+                  view={[formatNameDomainModalTrigger(setDomain), formatDenom, formatDenom]}
+                  sort={[compareString, compareNumber, compareNumber]}
+                  sortDefault={2}
+                  rowStyles="color-white"
+                  styles={["text-start", "text-start", "text-end"]}
+                />
+                : <p className="color-white text-center">No pending auctions.</p>
+              : <span></span>
+          }
+        </Col>
+        <Col lg={4} className="mt-5 px-3 px-xl-5 bl-lg">
+          <h3 className="text-center color-grey mb-3">Open</h3>
+          {
+            topAuctionsOpen ?
+              topAuctionsOpen.length > 0 ?
+                <SortedTable
+                  headers={["Name", "Price", "Close"]}
+                  data={topAuctionsOpen.map(a => [a.domain, a.topBidAmount, a.closeTime])}
+                  view={[formatNameDomainModalTrigger(setDomain), formatDenom, formatDateTimeShort]}
+                  sort={[compareString, compareNumber, compareNumber]}
+                  sortDefault={2}
+                  sortReverse={true}
+                  rowStyles="color-white"
+                  styles={["text-start", "text-end", "text-end"]}
+                />
+                : <p className="color-white text-center">No open auctions.</p>
+              : <span></span>
+          }
+        </Col>
+        <Col lg={4} className="mt-5 px-3 px-xl-5 bl-lg">
+          <h3 className="text-center color-grey mb-3">Closed</h3>
+          {
+            topAuctionsClosed ?
+              topAuctionsClosed.length > 0 ?
+                <SortedTable
+                  headers={["Name", "Winner", "Price"]}
+                  data={topAuctionsClosed.map(a => [a.domain, a.topBidder, a.topBidAmount])}
+                  view={[formatNameDomainModalTrigger(setDomain), formatName, formatDenom]}
+                  sort={[compareString, compareString, compareNumber]}
+                  sortDefault={2}
+                  rowStyles="color-white"
+                  styles={["text-start", "text-start", "text-end"]}
+                />
+                : <p className="color-white text-center">No closed auctions.</p>
+              : <span></span>
+          }
         </Col>
       </Row>
     </Layout>
@@ -163,4 +125,4 @@ const IndexPage = () => {
 
 export default IndexPage
 
-export const Head = () => <title>Home Page</title>
+export const Head = () => <title>Kujira Name System</title>

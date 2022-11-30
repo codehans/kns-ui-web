@@ -14,7 +14,7 @@ class SortedTable extends React.Component {
     if (this.props.sort) {
       const sortCol = this.props.sortDefault ? this.props.sortDefault : 0
       const sortIndex = this.getSortIndex(this.state.sortIndex, sortCol)
-      this.state = { sortIndex: sortIndex, sortCol: sortCol, sortReverse: false }
+      this.state = { sortIndex: sortIndex, sortCol: sortCol, sortReverse: this.props.sortReverse }
     }
     this.getCellContent = this.getCellContent.bind(this)
     this.getCellStyle = this.getCellStyle.bind(this)
@@ -81,10 +81,9 @@ class SortedTable extends React.Component {
 
   componentDidUpdate(prev) {
     if (!isEqual(this.props.data, prev.data)) {
-      const sortCol = this.state.sortCol
       this.setState({
-        sortCol: sortCol,
-        sortIndex: this.getSortIndex(Array(this.props.data.length).keys(), sortCol),
+        sortCol: this.state.sortCol,
+        sortIndex: this.getSortIndex(Array(this.props.data.length).keys(), this.state.sortCol),
         sortReverse: this.state.sortReverse,
       })
     }
