@@ -21,7 +21,9 @@ const ProfilePage = () => {
   }
   React.useEffect(() => { setGlobalRefresh({refresh: refresh}) }, [])
   React.useEffect(refresh, [])
-  window.addEventListener("keplr_keystorechange", () => { setWalletSigner(getWalletSigner()) })
+  if (typeof window !== "undefined") {
+    window.addEventListener("keplr_keystorechange", () => { setWalletSigner(getWalletSigner()) })
+  }
 
 
   return (

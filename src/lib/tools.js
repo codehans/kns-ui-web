@@ -76,7 +76,7 @@ const getWalletSignerKeplr = async () => window.keplr
   .catch(console.log)
 
 const getWalletSigner = () => {
-  if (window.keplr) {
+  if (window && window.keplr) {
     return getWalletSignerKeplr()
   } else {
     return null
