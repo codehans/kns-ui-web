@@ -36,6 +36,8 @@ const getAuctionStatus = (openStart) => {
 
 const getAuctionsConfig = async () => auctions.then(a => a.config())
 
+const getRegistrarConfig = async () => registrar.then(r => r.config())
+
 const getAuction = async (domain) => !domain ? null : auctions
   .then(a => a
     .auction({ domain: domain })
@@ -150,7 +152,7 @@ const getUserDomains = (addr, cb) => {
     .catch(() => cb(false))
 }
 
-const getUserBids = (addr, cb) => !addr ? null : auctions
+const getUserBids = (addr) => !addr ? null : auctions
     .then(a => a.bidsByBidder({ bidder: addr })
       .then(res => Promise.all(res.bids
         .map(bid => a
@@ -209,6 +211,8 @@ const getAuctionDetails = (auction, bid) => {
   }
 }
 
+const getChangeEventHandler = setFn => (event) => { setFn(event.target.value) }
+
 export {
   compareAuctionStatus,
   compareDomainStatus,
@@ -234,4 +238,6 @@ export {
   getUserDomains,
   getWalletSigner,
   resolveKujiraAddr,
+  getChangeEventHandler,
+  getRegistrarConfig,
 }

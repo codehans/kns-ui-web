@@ -61,21 +61,21 @@ class SortedTable extends React.Component {
       .sort((x, y) => {
         const dx = this.props.data[x][sortCol]
         const dy = this.props.data[y][sortCol]
-        return this.props.sort[sortCol] ?
-          this.props.sort[sortCol](dx, dy)
-          : dx - dy
+        return this.props.sort[sortCol](dx, dy)
       })
   }
 
   handleSort(event, sortCol) {
-    if (this.state.sortCol === sortCol) {
-      this.setState({ sortReverse: !this.state.sortReverse })
-    } else {
-      this.setState({
-        sortCol: sortCol,
-        sortIndex: this.getSortIndex(this.state.sortIndex, sortCol),
-        sortReverse: false,
-      })
+    if (this.props.sort[sortCol]) {
+      if (this.state.sortCol === sortCol) {
+        this.setState({ sortReverse: !this.state.sortReverse })
+      } else {
+        this.setState({
+          sortCol: sortCol,
+          sortIndex: this.getSortIndex(this.state.sortIndex, sortCol),
+          sortReverse: false,
+        })
+      }
     }
   }
 
@@ -105,7 +105,7 @@ class SortedTable extends React.Component {
                   tabIndex={0}
                 >
                   {typeof header == "string" ? header : header()}&nbsp;
-                  <span style={{position: "relative", width: "1em"}}>
+                  <span style={{position: "relative", width: "1em"}} className={this.props.sort[i] ? "" : "d-none"}>
                     <FaSortUp
                       style={{position: "absolute", marginTop: "0.25em"}}
                       className={this.state.sortCol === i && this.state.sortReverse ? "text-secondary" : "text-muted"}

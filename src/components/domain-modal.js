@@ -3,13 +3,12 @@ import Modal from "react-bootstrap/Modal"
 import Form from "react-bootstrap/Form"
 import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
-import FloatingLabel from "react-bootstrap/FloatingLabel"
 import { atom, useAtom } from "jotai"
 
 import Denom from "./denom"
 import FormatName from "./format-name"
 import FormatDate from "./format-date"
-import { getRecordDisplayKind } from "../lib/tools"
+import { getChangeEventHandler, getRecordDisplayKind } from "../lib/tools"
 import { denomBase, denomDisplay, denomFull, denomExponent } from "../lib/vars"
 import {
   auctionAtom,
@@ -23,6 +22,7 @@ import {
   tokenAtom,
   walletAddrAtom,
   registrarSignerAtom,
+  registrarConfigAtom,
 } from "../lib/data"
 
 
@@ -45,21 +45,13 @@ const DomainModal = () => {
   const [registrarSigner] = useAtom(registrarSignerAtom)
   const [globalRefresh] = useAtom(globalRefreshAtom)
   const [walletAddr] = useAtom(walletAddrAtom)
+  const [registrarConfig] = useAtom(registrarConfigAtom)
   
   const handleClose = () => {
     setDomain("")
     setBidInput("")
     setRecordKind("kujira_addr")
     setRecordData("")
-  }
-  const handleRecordKindChange = (event) => {
-    setRecordKind(event.target.value)
-  }
-  const handleRecordDataChange = (event) => {
-    setRecordData(event.target.value)
-  }
-  const handleBidChange = (event) => {
-    setBidInput(event.target.value)
   }
   const handleClaim = (event) => {
     event.preventDefault()
@@ -113,6 +105,20 @@ const DomainModal = () => {
       registrarSigner
         .extension(
           {msg: {register: {token_id: domain, record_kind: recordKind, record_data: recordData}}}
+        )
+        .then(globalRefresh.refresh)
+        .catch(console.log)
+    }
+  }
+  const handleExtend = (event) => {
+    event.preventDefault()
+    if (registrarSigner && domainInfo.state === "hasData") {
+      registrarSigner
+        .extension(
+          {msg: {extend: {token_id: domain, duration: registrarConfig.base_duration }}},
+          "auto",
+          undefined,
+          [{ denom: denomFull, amount: domainInfo.data.base_price }],
         )
         .then(globalRefresh.refresh)
         .catch(console.log)
@@ -301,27 +307,35 @@ const DomainModal = () => {
           {
             isTokenOwner ?
               <>
-                <Form.Select onChange={handleRecordKindChange} className="md-input text-light bg-dark mb-1">
+                <Form.Select onChange={getChangeEventHandler(setRecordKind)} className="md-input color-white bg-dark mb-1">
                   <option value="kujira_addr">Address</option>
                   <option value="domain">Domain</option>
                 </Form.Select>
-                <Form.Control type="text" placeholder="Record data" onChange={handleRecordDataChange} className="md-input text-light bg-dark"/>
+                <Form.Control type="text" placeholder="Record data" onChange={getChangeEventHandler(setRecordData)} className="md-input color-white bg-dark"/>
               </>
               : <Form.Control
                 type="number"
                 placeholder={denomDisplay}
                 className="md-input text-light bg-dark"
-                onChange={handleBidChange}
+                onChange={getChangeEventHandler(setBidInput)}
               />
           }
           {
             isTokenOwner ?
-              <button
-                className="md-button md-button--full mt-2"
-                onClick={handleRegister}
-              >
-                Register
-              </button>
+              <>
+                <button
+                  className="md-button md-button--full mt-2"
+                  onClick={handleRegister}
+                >
+                  Register
+                </button>
+                <button
+                  className="md-button md-button--full mt-1 md-button--outline"
+                  onClick={handleExtend}
+                >
+                  Extend ({Number(domainInfo.data ? domainInfo.data.base_price : "") / 10 ** denomExponent} {denomDisplay})
+                </button>
+              </>
               : hasDomainBid ?
                 isTopBidder ?
                   <button

@@ -43,7 +43,7 @@ const SetReverseModal = () => {
         </p>
         <Form onSubmit={handleSet}>
           <Form.Control type="text" placeholder="domain.kuji" value={name} className="md-input text-light bg-dark" onChange={handleChange}/>
-          <button className="md-button md-button--full mt-1" type="submit">Set Reverse Record</button>
+          <button className="md-button md-button--full mt-1" type="submit">Set Address Record</button>
         </Form>
       </Modal.Body>
     </Modal>

@@ -35,6 +35,7 @@ const userDomainsAtom = loadable(atom((get) => {
 }))
 
 const auctionsConfigAtom = atom(null)
+const registrarConfigAtom = atom(null)
 const auctionsSignerAtom = atom((get) => getAuctionsSignClient(get(walletAddrAtom), get(walletSignerAtom)))
 const registrarSignerAtom = atom((get) => getRegistrarSignClient(get(walletAddrAtom), get(walletSignerAtom)))
 const registrySignerAtom = atom((get) => getRegistrySignClient(get(walletAddrAtom), get(walletSignerAtom)))
@@ -82,5 +83,6 @@ export {
   globalRefreshAtom,
   registrarSignerAtom,
   registrySignerAtom,
+  registrarConfigAtom,
   showReverseModalAtom,
 }
